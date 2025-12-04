@@ -8,8 +8,8 @@ FILE_PATH = "scripture_text.txt"
 INDEX_PATH = "bhagavad_gita_index"
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 CHROMA_COLLECTION_NAME = "bhagavad_gita_collection"
-CHUNK_SIZE = 500
-CHUNK_OVERLAP = 100
+CHUNK_SIZE = 1000
+CHUNK_OVERLAP = 250
 
 def create_knowledge_base():
     if os.path.exists(INDEX_PATH):
