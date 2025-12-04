@@ -8,13 +8,15 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.vectorstores import Chroma
 from langchain_core.runnables import RunnablePassthrough, RunnableLambda
 from langchain_core.output_parsers import StrOutputParser
+# add rbac
+# lesson based plan
 
 MODEL_FILE = "mistral-7b-instruct-v0.2.Q4_K_M.gguf" 
 INDEX_PATH = "bhagavad_gita_index"
 CHROMA_COLLECTION_NAME = "bhagavad_gita_collection"
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 GPU_DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
+# add audio input option for people who have difficulty typing
 @st.cache_resource
 def get_rag_chain():
     st.write(f"Initializing LlamaCpp Model: {MODEL_FILE}...")
@@ -51,7 +53,9 @@ def get_rag_chain():
 
     def format_docs(docs):
         return "\n\n".join(doc.page_content for doc in docs)
-    
+    # make it more empathetic (try to understand where they are coming from and why they are thinking that way, see if there is malice)
+    # make it so it takes previous messages into account
+    # do not cite philosophical text, just give practical advice
     system_template = """
     You are an AI program designed to help mental health professionals by providing insights based on ancient philosophical texts. You are to
     answer questions from user providing guidance strictly based on the content provided below. You are *NOT* to mention any religious or  
