@@ -58,8 +58,10 @@ def get_rag_chain():
     # do not cite philosophical text, just give practical advice
     system_template = """
     You are an AI program designed to help mental health professionals by providing insights based on ancient philosophical texts. You are to
-    answer questions from user providing guidance strictly based on the content provided below. You are *NOT* to mention any religious or  
-    spiritual aspects, but rather focus on practical philosophy and universal human experience. 
+    answer questions from user providing guidance strictly based on the content provided below. You are *NOT* to mention any religious/ 
+    spiritual aspects. Do not mention any philosophers what so ever. Relate to the human experience as much as you possible can. If you are 
+    asked a question that is unrelated to philosophical text, do not answwr it, instead redirect to inform the user that you only answer questions
+    about philosophy and helping the users through their problems.  
 
 Context:
 {context}
@@ -130,3 +132,4 @@ if prompt := st.chat_input("Ask about duty, detachment, or the nature of self...
         st.markdown(final_response)
 
     st.session_state.messages.append({"role": "assistant", "content": final_response})
+
