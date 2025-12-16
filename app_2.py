@@ -37,7 +37,7 @@ def get_rag_chain():
 
     embeddings = HuggingFaceEmbeddings(
         model_name=EMBEDDING_MODEL_NAME,
-        model_kwargs={'device': GPU_DEVICE}
+        model_kwargs={'device': GPU_DEVICE, 'trust_remote_code': True}
     )
     
     if not os.path.exists(INDEX_PATH):
