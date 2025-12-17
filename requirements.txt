@@ -1,8 +1,25 @@
-streamlit
-torch
-langchain
-langchain-community
-langchain-huggingface
-chromadb
-llama-cpp-python
+Core Streamlit and LangChain packages
 
+streamlit
+langchain-core
+langchain-community
+langchain-text-splitters
+langchain-huggingface
+pydantic-settings
+
+ML Core dependencies (Pinning for stability)
+
+torch --index-url https://download.pytorch.org/whl/cpu
+sentence-transformers
+chromadb
+
+GGUF Inference
+
+We use a pre-compiled version if possible or ensure it doesn't try to build CUDA on a CPU-only server
+
+llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+
+Utility
+
+firebase-admin
+google-cloud-firestore
