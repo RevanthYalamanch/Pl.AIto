@@ -1,4 +1,4 @@
-# Core Streamlit and LangChain packages
+# --- Streamlit and Logic ---
 
 streamlit
 langchain-core
@@ -7,19 +7,21 @@ langchain-text-splitters
 langchain-huggingface
 pydantic-settings
 
-# ML Core dependencies (Pinning for stability)
+# --- Machine Learning (CPU-only for Cloud) ---
 
-torch --index-url https://download.pytorch.org/whl/cpu
+We use standard names without complex flags to avoid 'uv' parsing errors
+
+torch
 sentence-transformers
 chromadb
 
-#GGUF Inference
+# --- LlamaCpp ---
 
-# We use a pre-compiled version if possible or ensure it doesn't try to build CUDA on a CPU-only server
+Note: Building this on Streamlit Cloud frequently fails due to 1GB RAM limits.
 
-llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+llama-cpp-python
 
-# Utility
+# --- Backend ---
 
 firebase-admin
 google-cloud-firestore
