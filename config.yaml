@@ -1,0 +1,131 @@
+project:
+  name: "Gita Clinical Mentor"
+  version: "1.0.0"
+  deployment: "google-cloud-run"
+
+# Infrastructure settings
+networks:
+  gpu_server: "https://gjiwe-47-198-17-40.a.free.pinggy.link"
+  db_port: 5433
+  db_name: "wellbeing_db"
+  db_host: "localhost"
+
+# LLM Parameters
+models:
+  chat: "deepseek-r1"
+  embeddings: "nomic-embed-text"
+  temperature_general: 0.7
+  temperature_lesson: 0.3
+  top_k_retrieval: 3
+
+
+curriculum:
+  1:
+    title: "The Physics of Stress"
+    verse: "2.14"
+    focus: "Psychoeducation"
+    objective: "Emotional Impermanence"
+    instruction: |
+      [cite_start]Start by quoting Gita 2.14: 'The contact of bodily senses with objects... creates feelings like sorrow or happiness... but these are impermanent... like passing clouds'[cite: 52559].
+      Ask the user: 'What "season" of mood are you in right now—stormy, winter, or something else?'
+      Exercise: Guide them to sit with the physical sensation for 60 seconds, observing it as a transient event rather than a permanent identity.
+
+  2:
+    title: "The Inner Ally vs. Enemy"
+    verse: "6.5"
+    focus: "Self-Monitoring"
+    objective: "Identifying Cognitive Distortions"
+    instruction: |
+      [cite_start]Reference Gita 6.5: 'The self can be both friend and foe... a friend when used to conquer the mind... a foe when it drags one into the body'[cite: 52649].
+      Explain that 'enemy thoughts' are what CBT calls Negative Automatic Thoughts (NATs).
+      Exercise: Ask the user to identify one 'Enemy Thought' they've had today and rename it to something less powerful.
+
+  3:
+    title: "The Ladder of Fall"
+    verse: "2.62-63"
+    focus: "Functional Analysis"
+    objective: "Mapping Attachment and Anger"
+    instruction: |
+      [cite_start]Use the 'Ladder of Fall' from 2.62-63: Brooding leads to attachment, which leads to desire, then anger, then delusion, and finally ruin[cite: 52584].
+      CBT Link: This is the ABC Model (Activating Event -> Belief -> Consequence).
+      Exercise: Ask the user about a recent moment of anger. Help them map it using this 'Ladder' to see where brooding (thinking) turned into distress.
+
+  4:
+    title: "Process Over Prize"
+    verse: "2.47"
+    focus: "SMART Goals"
+    objective: "Outcome Detachment"
+    instruction: |
+      [cite_start]Quote Gita 2.47: 'You have every right to work but you should not crave the fruits of it'[cite: 52575].
+      CBT Link: Outcome-based goals create anxiety. Action-based goals create progress.
+      Exercise: Help the user set one goal for tomorrow that is entirely within their control (e.g., 'I will walk for 10 minutes' instead of 'I will lose weight').
+
+  5:
+    title: "The Sattvic Rhythm"
+    verse: "6.17"
+    focus: "Behavioral Activation"
+    objective: "Biological Regulation"
+    instruction: |
+      [cite_start]Cite Gita 6.17: 'Yoga is for those who are moderate in eating, recreation, and sleep'[cite: 52653].
+      Explain that inconsistent rhythms trigger low mood.
+      Exercise: Perform a 'Sattvic Audit.' Ask the user to identify one area (sleep, diet, or work) where they can introduce more balance and moderation.
+
+  6:
+    title: "Action as Therapy"
+    verse: "3.8"
+    focus: "Behavioral Activation"
+    objective: "Overcoming Inaction"
+    instruction: |
+      [cite_start]Reference Gita 3.8: 'Do your obligated duties... Duty-bound action is far better than inaction'[cite: 52592].
+      CBT Link: When we feel low, we wait to feel better before acting. Behavioral activation says act first to feel better.
+      Exercise: Identify one small task the user has been avoiding. Commit to doing just 5 minutes of it as 'Karma Yoga'—action without overthinking.
+
+  7:
+    title: "The Courage to Arise"
+    verse: "2.3"
+    focus: "Graded Exposure"
+    objective: "Facing Fear"
+    instruction: |
+      Reference Arjuna's trembling hands and Krishna's response in 2.3: 'Yield not to this feebleness! [cite_start]... Stand up, O scorcher of enemies!'[cite: 52555, 52556].
+      CBT Link: Exposure therapy is the gold standard for anxiety.
+      Exercise: Ask the user to name a small social or personal fear. Create a 3-step 'Ladder of Courage' to face it incrementally.
+
+  8:
+    title: "Caging the Wind"
+    verse: "6.34-35"
+    focus: "Cognitive Containment"
+    objective: "Worry Management"
+    instruction: |
+      [cite_start]Quote 6.34-35: The mind is 'as hard to restrain as the wild wind,' but can be subdues through practice and nonattachment[cite: 52658].
+      CBT Link: Designate a 'Worry Time' (15 minutes a day) to contain rumination.
+      Exercise: Practice a 'Thought Parking' exercise. Every time a worry arises, tell the mind, 'I will look at you during my scheduled worry time.'
+
+  9:
+    title: "The Sword of Discernment"
+    verse: "18.30"
+    focus: "Problem Solving"
+    objective: "Structured Decision Making"
+    instruction: |
+      [cite_start]Cite Gita 18.30: 'Sattvic intellect discriminates between... what sets the soul free and what imprisons it'[cite: 52828].
+      CBT Link: Emotional bias clouds problem-solving.
+      Exercise: Take one problem the user is facing. Use 'Sattvic Intellect' to break it into 5 actionable steps, separating facts from emotional fears.
+
+  10:
+    title: "Seeing the Unified Truth"
+    verse: "18.20"
+    focus: "Cognitive Restructuring"
+    objective: "Challenging All-or-Nothing Thinking"
+    instruction: |
+      [cite_start]Quote 18.20: 'Sattvic knowledge knows the Divinity of the Self... and sees none of the separateness that others see'[cite: 52824].
+      CBT Link: Cognitive distortions often involve 'Black and White' thinking (separateness).
+      Exercise: Take a recent conflict or self-criticism. Help the user find the 'Middle Path' or 'Unified View' that acknowledges both their mistakes and their inherent worth.
+
+  11:
+    title: "The Wellbeing Blueprint"
+    verse: "2.56"
+    focus: "Relapse Prevention"
+    objective: "Establishing Steady Wisdom"
+    instruction: |
+      [cite_start]Summarize the 'Sthithaprajna' from 2.56: 'One whose mind is unperturbed by sorrow... and free of attachment, fear, and anger'[cite: 52582].
+      CBT Link: Relapse prevention is about building a toolkit for the future.
+      Exercise: Help the user select their 'Top 3 Tools' from the previous 10 hours. Create a personal 'Wellbeing Blueprint' for when mental weather turns 'stormy' again.

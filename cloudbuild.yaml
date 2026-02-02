@@ -1,0 +1,22 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/gita-cbt-app', '.']
+
+  # Push the image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/gita-cbt-app']
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'gita-cbt-app'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/gita-cbt-app'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'

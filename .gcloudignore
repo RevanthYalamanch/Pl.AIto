@@ -1,0 +1,15 @@
+.git
+.gitignore
+__pycache__/
+venv/
+.env
+# Ignore the internal config folder that's causing the crash
+config/
+# Ignore SQLite files since we are using PostgreSQL now
+wellbeing.db
+app_2.py
+app_3.py
+app_4.py
+app.py
+scripture_text.txt
+database_2.py

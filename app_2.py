@@ -1,141 +1,142 @@
 import streamlit as st
 import torch
 import os
+import multiprocessing
 from langchain_community.llms import LlamaCpp 
-from langchain_core.prompts import PromptTemplate 
-from langchain_huggingface.embeddings import HuggingFaceEmbeddings
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_community.vectorstores import Chroma
 from langchain_core.runnables import RunnablePassthrough, RunnableLambda
 from langchain_core.output_parsers import StrOutputParser
-# add rbac
-# lesson based plan
+from langchain_huggingface.embeddings import HuggingFaceEmbeddings
+from langchain_core.messages import HumanMessage, AIMessage
+from langchain_ollama import OllamaLLM, OllamaEmbeddings
 
-MODEL_FILE = "llama-3.1-8b-instruct.Q5_K_M.gguf" 
+# --- CONFIGURATION ---
+MODEL_FILE = "Mistral-Nemo-12B-Instruct.Q4_K_M.gguf" 
 INDEX_PATH = "bhagavad_gita_index"
 CHROMA_COLLECTION_NAME = "bhagavad_gita_collection"
 EMBEDDING_MODEL_NAME = "nvidia/llama-embed-nemotron-8b"
-GPU_DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-# add audio input option for people who have difficulty typing
+
+# Force CPU settings for stability
+GPU_DEVICE = "cpu"
+CPU_THREADS = multiprocessing.cpu_count()
+
 @st.cache_resource
 def get_rag_chain():
-    st.write(f"Initializing LlamaCpp Model: {MODEL_FILE}...")
-    
     if not os.path.exists(MODEL_FILE):
         st.error(f"Error: GGUF model file '{MODEL_FILE}' not found.")
         st.stop()
 
+    # CPU Optimized LLM Initialization
     llm = LlamaCpp(
         model_path=MODEL_FILE,
-        n_gpu_layers=-1 if GPU_DEVICE == "cuda" else 0,
-        n_batch=512,
-        n_ctx=4096, 
-        temperature=0.7,
-        max_tokens=512,
+        n_gpu_layers=0,
+        n_threads=CPU_THREADS,
+        n_batch=128,
+        n_ctx=2048, 
+        temperature=0.3,
+        max_tokens=1024,
         verbose=False,
     )
 
     embeddings = HuggingFaceEmbeddings(
         model_name=EMBEDDING_MODEL_NAME,
-        model_kwargs={'device': GPU_DEVICE, 'trust_remote_code': True}
+        model_kwargs={'device': 'cpu', 'trust_remote_code': True}
     )
     
-    if not os.path.exists(INDEX_PATH):
-        st.error(f"Error: Index path '{INDEX_PATH}' not found.")
-        st.stop()
-
     vector_store = Chroma(
         persist_directory=INDEX_PATH, 
         embedding_function=embeddings, 
         collection_name=CHROMA_COLLECTION_NAME 
     )
-    retriever = vector_store.as_retriever(search_kwargs={"k": 5}) 
+    retriever = vector_store.as_retriever(search_kwargs={"k": 3})
 
-    def format_docs(docs):
-        return "\n\n".join(doc.page_content for doc in docs)
-    # make it more empathetic (try to understand where they are coming from and why they are thinking that way, see if there is malice)
-    # make it so it takes previous messages into account
-    # do not cite philosophical text, just give practical advice
-    system_template = """
-You are an AI program designed to help licensed mental health professionals by providing deep, empathetic, and secular insights based on ancient philosophical texts.
+    # 1. Contextualization: Converts "How do I do that?" into a full search query
+    contextualize_q_system_prompt = (
+        "Given a chat history and the latest user question "
+        "formulate a standalone question which can be understood "
+        "without the chat history. Do NOT answer the question, "
+        "just reformulate it if needed and otherwise return it as is."
+    )
+    
+    contextualize_q_prompt = ChatPromptTemplate.from_messages([
+        ("system", contextualize_q_system_prompt),
+        MessagesPlaceholder(variable_name="chat_history"),
+        ("human", "{input}"),
+    ])
 
-Your core mission is to:
-1.  **Analyze the User's State:** Carefully read the user's message, attempting to understand the underlying emotions, source of their distress, and any possible negative intent (malice) behind their expressed thought patterns. This is the **Empathy** layer.
-2.  **Maintain Context:** Take all previous messages into account when formulating your response, ensuring conversational flow and continuity.
-3.  **Provide Guidance:** Offer practical, actionable advice that relates directly to the human experience of the problem.
+    contextualize_q_chain = contextualize_q_prompt | llm | StrOutputParser()
 
-**Strict Constraints:**
-* You must answer questions strictly based on the philosophical principles derived from the **Context** provided below.
-* Do not cite philosophical texts, names of philosophers, or spiritual/religious terms (e.g., use 'universal duty' instead of 'dharma').
-* Do not give generic definitions. Provide **practical advice** that helps the user navigate their problem.
-* If a question is unrelated to philosophical principles, you must politely inform the user that you only answer questions about philosophy and helping users through their emotional/psychological problems.
+    # 2. Main Prompt
+    system_template = """<s>[INST] 
+ You are a wise, secular mentor. Use the provided Context to offer one paragraph of practical, empathetic advice.
+
+CRITICAL RULES:
+1. NEVER mention the name of the text, the author, or the philosopher (e.g., Do NOT say 'Based on the Analects' or 'Hippocrates said').
+2. NEVER use religious or spiritual terms.
+3. Use the Context to provide direct, actionable advice for the user's specific problem.
+4. If the user asks multiple questions, integrate the answers into a single, cohesive response.
+5. If the response is getting long, prioritize the most impactful advice so you do not cut off mid-sentence.
 
 Context:
 {context}
-"""
-    rag_prompt = ChatPromptTemplate.from_messages([
-        ("system", system_template),
-        ("human", "{input}")
-    ])
-    
-    answer_chain = (
-        rag_prompt 
-        | llm 
+
+User Input: {input} [/INST]</s>"""
+
+    qa_prompt = ChatPromptTemplate.from_template(system_template)
+
+    def format_docs(docs):
+        return "\n\n".join(doc.page_content for doc in docs)
+
+    # 3. Final Chain
+    rag_chain = (
+        RunnablePassthrough.assign(
+            context=contextualize_q_chain | retriever | format_docs
+        )
+        | qa_prompt
+        | llm
         | StrOutputParser()
     )
-
-    rag_chain = RunnablePassthrough.assign(
-        context=(lambda x: x['input']) | retriever,
-    ).assign(
-        answer=(
-            RunnablePassthrough.assign(context=(lambda x: x['input']) | retriever | RunnableLambda(format_docs))
-            | answer_chain
-        )
-    )
     
-    st.success(f"System Ready: {MODEL_FILE} Loaded via LlamaCpp.")
-    
-    return rag_chain, retriever 
+    return rag_chain
 
-
-st.set_page_config(page_title="Bhagavad Gita Philosophical Analyst", layout="wide")
+# --- UI LOGIC ---
+st.set_page_config(page_title="Philosophical Analyst", layout="wide")
 st.title("Philosophical Analyst of Ancient Texts")
-st.markdown("Ask any question about the ethical or philosophical principles in the texts.")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    
-with st.spinner("Initial setup: Loading the LlamaCpp Model and vector index. This may take a minute..."):
-    try:
-        rag_chain, retriever = get_rag_chain()
-    except Exception as e:
 
-        st.error(f"Failed to load RAG components. Please check terminal for errors. Last Error: {e}")
-        st.stop()
-    
+rag_chain = get_rag_chain()
+
+# Display Chat
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
 if prompt := st.chat_input("Ask about duty, detachment, or the nature of self..."):
+    # Build history (This is where the indentation fix happened)
+    history = []
+    for m in st.session_state.messages[-5:]: 
+        if m["role"] == "user":
+            history.append(HumanMessage(content=m["content"]))
+        else:
+            history.append(AIMessage(content=m["content"]))
 
+    # Display user message
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    with st.spinner("Analyzing the text for philosophical context..."):
-        try:
-            response = rag_chain.invoke({"input": prompt}) 
-            ai_response = response['answer']
-            retrieved_docs = response['context']
-            source_content = "\n\n---\n*Analysis complete.*"
-            final_response = ai_response + source_content
-
-        except Exception as e:
-            final_response = f"An error occurred during generation: {e}"
-
-
+    # Generate Response
     with st.chat_message("assistant"):
-        st.markdown(final_response)
-
-    st.session_state.messages.append({"role": "assistant", "content": final_response})
+        with st.spinner("Analyzing context..."):
+            try:
+                ai_response = rag_chain.invoke({
+                    "input": prompt,
+                    "chat_history": history
+                })
+                st.markdown(ai_response)
+                st.session_state.messages.append({"role": "assistant", "content": ai_response})
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
