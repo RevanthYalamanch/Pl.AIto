@@ -5,18 +5,36 @@ from passlib.hash import pbkdf2_sha256
 
 # --- CONFIGURATION LOADING ---
 def load_config():
-    with open("config.yaml", "r") as f:
-        return yaml.safe_load(f)
+    # Only load if the file exists (prevents errors in Cloud Run)
+    if os.path.exists("config.yaml"):
+        with open("config.yaml", "r") as f:
+            return yaml.safe_load(f)
+    return {}
 
 # --- CONNECTION LOGIC ---
 def get_connection():
-    return psycopg2.connect(
-        database="wellbeing_db",
-        user="postgres",
-        password="acakdoir",
-        host="localhost",
-        port="5432" 
-    )
+    """
+    Directly manages connections for Cloud Run (Unix Socket) 
+    and Local Development (TCP).
+    """
+    # K_SERVICE is the signal that we are running on Google Cloud
+    if os.getenv("K_SERVICE"):
+        return psycopg2.connect(
+            database="wellbeing_db",
+            user="postgres",
+            password="Acakdoir1!", 
+            # This is the dedicated pipe for Cloud Run to Cloud SQL
+            host="/cloudsql/bgita-teacher:us-central1:bgita-teacher"
+        )
+    else:
+        # LOCAL: Use your local Postgres settings
+        return psycopg2.connect(
+            database="wellbeing_db",
+            user="postgres",
+            password="acakdoir",
+            host="localhost",
+            port="5432" # Change to 5433 if your netstat showed 5433
+        )
 
 # --- DATABASE INITIALIZATION ---
 def init_db():
@@ -74,7 +92,7 @@ def get_credentials():
         credentials["usernames"][row[0]] = {
             "password": row[1],
             "name": row[2],
-            "roles": row[3] # Streamlit-authenticator expects a list
+            "roles": row[3]
         }
     
     cur.close()
